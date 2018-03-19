@@ -1,23 +1,38 @@
 package org.trello4j;
 
-import com.google.gson.reflect.TypeToken;
-
-import org.trello4j.model.*;
-import org.trello4j.model.Board.Prefs;
-import org.trello4j.model.Card.Attachment;
-import org.trello4j.model.Checklist.CheckItem;
-
-import javax.net.ssl.HttpsURLConnection;
-
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.Authenticator;
+import java.net.InetSocketAddress;
+import java.net.PasswordAuthentication;
+import java.net.Proxy;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
+
+import javax.net.ssl.HttpsURLConnection;
+
+import org.trello4j.model.Action;
+import org.trello4j.model.Board;
+import org.trello4j.model.Board.Prefs;
+import org.trello4j.model.Card;
+import org.trello4j.model.Card.Attachment;
+import org.trello4j.model.Checklist;
+import org.trello4j.model.Checklist.CheckItem;
+import org.trello4j.model.Label;
+import org.trello4j.model.Member;
+import org.trello4j.model.Notification;
+import org.trello4j.model.Organization;
+import org.trello4j.model.Token;
+import org.trello4j.model.Type;
+import org.trello4j.model.Webhook;
+
+import com.google.gson.reflect.TypeToken;
 
 /**
  * The Class TrelloImpl.
@@ -32,6 +47,11 @@ public class TrelloImpl implements Trello {
 
 	private String apiKey = null;
 	private String token = null;
+	private String proxyHost = null;
+	private int proxyPort;
+	private String proxyUser = null;
+	private String proxyPassword = null;
+	private Proxy proxy = null;
 	private TrelloObjectFactoryImpl trelloObjFactory = new TrelloObjectFactoryImpl();
 
 
@@ -40,12 +60,36 @@ public class TrelloImpl implements Trello {
 	}
 
 	public TrelloImpl(String apiKey, String token) {
+		this(apiKey, token, null, 0, null, null);
+	}
+	
+	public TrelloImpl(String apiKey, String token, String proxyHost, int proxyPort, String proxyUser, String proxyPassword) {
 		this.apiKey = apiKey;
 		this.token = token;
+		this.proxyHost = proxyHost;
+		this.proxyPort = proxyPort;
+		this.proxyUser = proxyUser;
+		this.proxyPassword = proxyPassword;
 
 		if (this.apiKey == null) {
 			throw new TrelloException(
 					"API key must be set, get one here: https://trello.com/1/appKey/generate");
+		}
+		
+		if (this.proxyHost != null && !this.proxyHost.trim().isEmpty()) {
+			this.proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(this.proxyHost, this.proxyPort == 0 ? 80 : this.proxyPort));
+			if (this.proxyUser != null && !this.proxyUser.trim().isEmpty()) {
+				Authenticator authenticator = new Authenticator() {
+					public PasswordAuthentication getPasswordAuthentication() {
+						if (getRequestorType() == Authenticator.RequestorType.PROXY) {
+							return (new PasswordAuthentication(TrelloImpl.this.proxyUser, TrelloImpl.this.proxyPassword.toCharArray()));
+						}
+						return null;
+					}
+				};
+				Authenticator.setDefault(authenticator);
+				
+			}
 		}
 	}
 
@@ -163,7 +207,7 @@ public class TrelloImpl implements Trello {
 	 * @see org.trello4j.BoardService#getCardsByBoard(java.lang.String)
 	 */
 	@Override
-	public List<Card> getCardsByBoard(String boardId, final String... filter) {
+	public List<Card> getCardsByBoard(String boardId, Map<String, String> keyValueMap, final String... filter) {
 		validateObjectId(boardId);
 
 		final String url = TrelloURL
@@ -172,7 +216,7 @@ public class TrelloImpl implements Trello {
 				.filter(filter)
 				.build();
 		return trelloObjFactory.createObject(new TypeToken<List<Card>>() {
-		}, doGet(url));
+		}, doGet(url, keyValueMap));
 	}
 
 	/*
@@ -422,16 +466,23 @@ public class TrelloImpl implements Trello {
 	 * @see org.trello4j.CardService#getActionsByCard(java.lang.String)
 	 */
 	@Override
-	public List<Action> getActionsByCard(final String cardId) {
+	public List<Action> getActionsByCard(final String cardId, List<String> actions) {
 		validateObjectId(cardId);
 
 		final String url = TrelloURL
 				.create(apiKey, TrelloURL.CARD_ACTION_URL, cardId)
 				.token(token)
 				.build();
-
+		Map<String, String> keyValueMap = new HashMap<String, String>();
+		if (actions != null && !actions.isEmpty()) {
+			StringBuilder sb = new StringBuilder(actions.get(0));
+			for (int i = 1; i < actions.size(); i++) {
+				sb.append(",").append(actions.get(i));
+			}
+			keyValueMap.put("filter", sb.toString());
+		}
 		return trelloObjFactory.createObject(new TypeToken<List<Action>>() {
-		}, doGet(url));
+		}, doGet(url, keyValueMap));
 	}
 
 	/*
@@ -552,7 +603,7 @@ public class TrelloImpl implements Trello {
 		validateObjectId(idList);
 
 		final String url = TrelloURL
-				.create(apiKey, TrelloURL.CARD_POST_URL)
+				.create(apiKey, TrelloURL.CARD_URL, "")
 				.token(token)
 				.build();
 		if (keyValueMap == null) keyValueMap = new HashMap<String, String>();
@@ -1190,13 +1241,119 @@ public class TrelloImpl implements Trello {
 		return trelloObjFactory.createObject(new TypeToken<Member>() {
 		}, doGet(url));
 	}
-
-	private InputStream doGet(String url) {
-		return doRequest(url, METHOD_GET);
+	
+	@Override
+	public List<Label> getLabelsByBoard(String boardId, Integer limit, String... filter) {
+		String url = TrelloURL.create(apiKey, TrelloURL.BOARD_LABELS_URL, boardId).token(token).filter(filter).build();
+		HashMap<String, String> keyValueMap = new HashMap<String, String>();
+		if (limit != null) {
+			keyValueMap.put("limit", limit.toString());
+		}
+		return trelloObjFactory.createObject(new TypeToken<List<Label>>() {}, doGet(url, keyValueMap));
 	}
 
-	private InputStream doPut(String url) {
-		return doRequest(url, METHOD_PUT);
+	@Override
+	public void deleteIdLabelByCard(String cardId, String idLabel) {
+		String url = TrelloURL.create(apiKey, TrelloURL.CARD_IDLABELS_URL, cardId, idLabel).token(token).build();
+		doDelete(url);
+	}
+
+	@Override
+	public void deleteCard(String cardId) {
+		String url = TrelloURL.create(apiKey, TrelloURL.CARD_URL, cardId).token(token).build();
+		doDelete(url);
+	}
+
+	@Override
+	public Label addLabelToCard(String cardId, String idLabel) {
+		String url = TrelloURL.create(apiKey, TrelloURL.CARD_IDLABELS_URL, cardId).token(token).build();
+		HashMap<String, String> keyValueMap = new HashMap<String, String>();
+		keyValueMap.put("value", idLabel);
+		return trelloObjFactory.createObject(new TypeToken<Label>() {}, doPost(url, keyValueMap));
+	}
+
+	@Override
+	public Action addCommentToCard(String cardId, String text) {
+		String url = TrelloURL.create(apiKey, TrelloURL.CARD_ACTION_COMMENT_URL, cardId).token(token).build();
+		HashMap<String, String> keyValueMap = new HashMap<String, String>();
+		keyValueMap.put("text", text);
+		return trelloObjFactory.createObject(new TypeToken<Action>() {}, doPost(url, keyValueMap));
+	}
+
+	@Override
+	public Checklist addChecklistToCard(String cardId, String name, String idChecklistSource) {
+		String url = TrelloURL.create(apiKey, TrelloURL.CARD_CHECKLISTS_URL, cardId).token(token).build();
+		HashMap<String, String> keyValueMap = new HashMap<String, String>();
+		keyValueMap.put("name", name);
+		if (idChecklistSource != null && idChecklistSource.trim().isEmpty()) {
+			keyValueMap.put("idChecklistSource", idChecklistSource);
+		}
+		return trelloObjFactory.createObject(new TypeToken<Checklist>() {}, doPost(url, keyValueMap));
+	}
+
+	@Override
+	public void updateCard(String cardId, Map<String, String> keyValueMap) {
+		String url = TrelloURL.create(apiKey, TrelloURL.CARD_URL, cardId).token(token).build();
+		doPut(url, keyValueMap);
+	}
+
+	@Override
+	public org.trello4j.model.List createList(String idBoard, String name, Map<String, String> keyValueMap) {
+		validateObjectId(idBoard);
+
+		final String url = TrelloURL
+				.create(apiKey, TrelloURL.LIST_URL, "")
+				.token(token)
+				.build();
+		if (keyValueMap == null) keyValueMap = new HashMap<String, String>();
+		//if (keyValueMap.containsKey("name")) keyValueMap.remove("name");
+		keyValueMap.put("name", name);
+		keyValueMap.put("idBoard", idBoard);
+
+		return trelloObjFactory.createObject(new TypeToken<org.trello4j.model.List>() {
+		}, doPost(url, keyValueMap));
+	}
+
+	@Override
+	public Label createLabel(String idBoard, String name, String color) {
+		validateObjectId(idBoard);
+
+		final String url = TrelloURL
+				.create(apiKey, TrelloURL.LABEL_URL, "")
+				.token(token)
+				.build();
+		Map<String, String> keyValueMap = new HashMap<String, String>();
+		keyValueMap.put("idBoard", idBoard);
+		keyValueMap.put("name", name);
+		if (color != null) {
+			keyValueMap.put("color", color);
+		}
+		return trelloObjFactory.createObject(new TypeToken<Label>() {
+		}, doPost(url, keyValueMap));
+	}
+	
+	@Override
+	public CheckItem addCheckItemToChecklist(String checklistId, String name, Map<String, String> keyValueMap) {
+		final String url = TrelloURL
+				.create(apiKey, TrelloURL.CHECKLIST_CHECKITEMS_URL, checklistId)
+				.token(token)
+				.build();
+		if (keyValueMap == null) keyValueMap = new HashMap<String, String>();
+		keyValueMap.put("name", name);
+		return trelloObjFactory.createObject(new TypeToken<CheckItem>() {
+				}, doPost(url, keyValueMap));
+	}
+
+	private InputStream doGet(String url) {
+		return doGet(url, null);
+	}
+	
+	private InputStream doGet(String url, Map<String, String> map) {
+		return doRequest(url, METHOD_GET, map);
+	}
+
+	private InputStream doPut(String url, Map<String, String> map) {
+		return doRequest(url, METHOD_PUT, map);
 	}
 
 	private InputStream doPost(String url, Map<String, String> map) {
@@ -1219,25 +1376,42 @@ public class TrelloImpl implements Trello {
 	 */
 	private InputStream doRequest(String url, String requestMethod, Map<String, String> map) {
 		try {
-			HttpsURLConnection conn = (HttpsURLConnection) new URL(url)
-					.openConnection();
-			conn.setRequestProperty("Accept-Encoding", "gzip, deflate");
-            conn.setDoOutput(requestMethod.equals(METHOD_POST) || requestMethod.equals(METHOD_PUT));
-            conn.setRequestMethod(requestMethod);
-
+            StringBuilder sb = new StringBuilder();
             if(map != null && !map.isEmpty()) {
-                StringBuilder sb = new StringBuilder();
                 for (String key : map.keySet()) {
                     sb.append(sb.length() > 0 ? "&" : "")
                         .append(key)
                         .append("=")
                         .append(URLEncoder.encode(map.get(key), "UTF-8"));
                 }
+            }
+            if (sb.length() > 0) {
+            	url = url + (url.contains("?") ? "&" : "?") + sb.toString();
+            }
+			HttpsURLConnection conn;
+			if (proxy == null) {
+				conn = (HttpsURLConnection) new URL(url).openConnection();
+			} else {
+				conn = (HttpsURLConnection) new URL(url).openConnection(proxy);
+			}
+			conn.setRequestProperty("Accept-Encoding", "gzip, deflate");
+            conn.setDoOutput(requestMethod.equals(METHOD_POST) || requestMethod.equals(METHOD_PUT));
+            conn.setRequestMethod(requestMethod);
+
+            if(conn.getDoOutput()) {
                 conn.getOutputStream().write(sb.toString().getBytes());
                 conn.getOutputStream().close();
             }
 
-			if (conn.getResponseCode() > 399) {
+            if (conn.getResponseCode() == 429) {
+            	try {
+            		System.out.println("Waiting for Trello API rate limits");
+            		Thread.sleep(10000); //10 seconds as the doc recomends
+            	} catch (Exception e) {
+            	}
+            	return doRequest(url, requestMethod, map);
+            } else if (conn.getResponseCode() > 399) {
+            	System.err.println("Response error: " + conn.getResponseCode());
 				return null;
 			} else {
 				return getWrappedInputStream(
@@ -1245,7 +1419,7 @@ public class TrelloImpl implements Trello {
                 );
 			}
 		} catch (IOException e) {
-			throw new TrelloException(e.getMessage());
+			throw new TrelloException(e.getMessage(), e);
 		}
 	}
 
@@ -1274,4 +1448,5 @@ public class TrelloImpl implements Trello {
 			return new BufferedInputStream(is);
 		}
 	}
+
 }

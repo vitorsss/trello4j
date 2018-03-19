@@ -1,5 +1,7 @@
 package org.trello4j;
 
+import java.util.Map;
+
 import org.trello4j.model.Board;
 import org.trello4j.model.Card;
 import org.trello4j.model.Checklist;
@@ -48,4 +50,6 @@ public interface ChecklistService {
 	 * @return the check items by checklist
 	 */
 	java.util.List<CheckItem> getCheckItemsByChecklist(String checklistId);
+	
+	CheckItem addCheckItemToChecklist(String checklistId, String name, Map<String, String> keyValueMap);
 }

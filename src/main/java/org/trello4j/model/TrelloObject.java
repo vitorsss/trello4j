@@ -5,7 +5,7 @@ package org.trello4j.model;
  */
 public abstract class TrelloObject {
 
-	private String id;
+	protected String id;
 
 	public String getId() {
 		return id;

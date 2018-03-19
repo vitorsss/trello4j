@@ -9,6 +9,7 @@ import org.trello4j.model.Card;
 import org.trello4j.model.Card.Attachment;
 import org.trello4j.model.Checklist;
 import org.trello4j.model.Checklist.CheckItem;
+import org.trello4j.model.Label;
 import org.trello4j.model.Member;
 
 /**
@@ -20,7 +21,7 @@ public interface CardService {
 
 	Card getCard(String cardId);
 
-	List<Action> getActionsByCard(String cardId);
+	List<Action> getActionsByCard(String cardId, List<String> actions);
 
 	List<Attachment> getAttachmentsByCard(String cardId);
 
@@ -41,5 +42,17 @@ public interface CardService {
 	 * @param name Name of the new card.
 	 * @param keyValeMap Map of the optional key-value-pairs.
 	 */
-	Card createCard(String idList, String name, Map<String, String> keyValeMap);
+	Card createCard(String idList, String name, Map<String, String> keyValueMap);
+
+	void deleteIdLabelByCard(String cardId, String idLabel);
+
+	void deleteCard(String cardId);
+	
+	Label addLabelToCard(String cardId, String idLabel);
+	
+	Action addCommentToCard(String cardId, String text);
+	
+	Checklist addChecklistToCard(String cardId, String name, String idChecklistSource);
+	
+	void updateCard(String cardId, Map<String, String> keyValueMap);
 }

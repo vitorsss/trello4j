@@ -37,6 +37,15 @@
 				<role>developer</role>
 			</roles>
 		</developer>
+		<developer>
+			<id>vitorsss</id>
+			<name>Vitor</name>
+			<email>silva.vitor.soares@gmail.com</email>
+			<url>https://github.com/vitorsss/</url>
+			<roles>
+				<role>developer</role>
+			</roles>
+		</developer>
 	</developers>
 
 	<properties>

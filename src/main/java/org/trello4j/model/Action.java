@@ -112,6 +112,11 @@ public class Action extends TrelloObject {
         public void setCard(Card card) {
             this.card = card;
         }
+
+		@Override
+		public String toString() {
+			return "Data [text=" + text + ", board=" + board + ", card=" + card + "]";
+		}
     }
 
 
@@ -143,5 +148,12 @@ public class Action extends TrelloObject {
         public static final String UPDATE_ORGANIZATION = "updateOrganization";
 
     }
+
+
+	@Override
+	public String toString() {
+		return "Action [idMemberCreator=" + idMemberCreator + ", type=" + type + ", date=" + date + ", memberCreator="
+				+ memberCreator + ", data=" + data + ", id=" + id + "]";
+	}
 
 }

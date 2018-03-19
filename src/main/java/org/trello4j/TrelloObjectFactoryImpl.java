@@ -134,7 +134,7 @@ public class TrelloObjectFactoryImpl {
 	 *            the type token
 	 * @return true, if is list
 	 */
-	private boolean isList(TypeToken typeToken) {
+	private boolean isList(TypeToken<? extends Object> typeToken) {
 		return List.class.isAssignableFrom(typeToken.getRawType());
 	}
 

@@ -25,4 +25,8 @@ public class TrelloException extends RuntimeException {
 		super(msg);
 	}
 
+	public TrelloException(String msg, Throwable t) {
+		super(msg, t);
+	}
+
 }

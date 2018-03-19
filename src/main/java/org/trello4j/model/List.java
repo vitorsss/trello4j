@@ -104,4 +104,9 @@ public class List extends TrelloObject {
 		this.pos = pos;
 	}
 
+	@Override
+	public String toString() {
+		return "List [name=" + name + ", closed=" + closed + ", idBoard=" + idBoard + ", pos=" + pos + ", id=" + id + "]";
+	}
+
 }

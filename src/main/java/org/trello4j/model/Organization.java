@@ -22,45 +22,40 @@ public class Organization extends TrelloObject {
 	private String desc;
 	private String website;
 	private String url;
-
 	public String getName() {
 		return name;
 	}
-
 	public void setName(String name) {
 		this.name = name;
 	}
-
 	public String getDisplayName() {
 		return displayName;
 	}
-
 	public void setDisplayName(String displayName) {
 		this.displayName = displayName;
 	}
-
 	public String getDesc() {
 		return desc;
 	}
-
 	public void setDesc(String desc) {
 		this.desc = desc;
 	}
-
 	public String getWebsite() {
 		return website;
 	}
-
 	public void setWebsite(String website) {
 		this.website = website;
 	}
-
 	public String getUrl() {
 		return url;
 	}
-
 	public void setUrl(String url) {
 		this.url = url;
+	}
+	@Override
+	public String toString() {
+		return "Organization [name=" + name + ", displayName=" + displayName + ", desc=" + desc + ", website=" + website
+				+ ", url=" + url + ", id=" + id + "]";
 	}
 
 }

@@ -109,4 +109,11 @@ public class Member extends TrelloObject {
 		this.idBoards = idBoards;
 	}
 
+	@Override
+	public String toString() {
+		return "Member [avatarHash=" + avatarHash + ", fullName=" + fullName + ", initials=" + initials + ", status="
+				+ status + ", url=" + url + ", username=" + username + ", idOrganizations=" + idOrganizations
+				+ ", idBoards=" + idBoards + "]";
+	}
+
 }

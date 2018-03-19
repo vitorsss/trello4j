@@ -113,5 +113,17 @@ public class Board extends TrelloObject {
 			this.comments = comments;
 		}
 
+		@Override
+		public String toString() {
+			return "Prefs [voting=" + voting + ", permissionLevel=" + permissionLevel + ", invitations=" + invitations
+					+ ", comments=" + comments + "]";
+		}
+
+	}
+
+	@Override
+	public String toString() {
+		return "Board [name=" + name + ", desc=" + desc + ", closed=" + closed + ", invited=" + invited
+				+ ", idOrganization=" + idOrganization + ", url=" + url + ", prefs=" + prefs + "]";
 	}
 }

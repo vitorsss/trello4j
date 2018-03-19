@@ -7,7 +7,6 @@ public class Card extends TrelloObject {
 
 	// TODO: idChecklists
 	// TODO: checkItemStates
-	// TODO: badges
 
 	private String name;
 	private String desc;
@@ -15,11 +14,15 @@ public class Card extends TrelloObject {
 	private Long idShort;
 	private String idList;
 	private String idBoard;
+	private List<String> idChecklists;
 	private List<String> idMembers;
 	private List<Attachment> attachments;
 	private List<Label> labels;
 	private String url;
 	private double pos;
+	private Date due;
+	private boolean dueComplete;
+	private Badges badges;
 
     public String getName() {
 		return name;
@@ -108,6 +111,93 @@ public class Card extends TrelloObject {
 	public void setLabels(List<Label> labels) {
 		this.labels = labels;
 	}
+	
+	public class Badges {
+		private Long votes;
+		private Long checkItems;
+		private Long checkItemsChecked;
+		private Long comments;
+		private Long attachments;
+		private Date due;
+		private String fogbugz;
+		private boolean viewingMemberVoted;
+		private boolean subscribed;
+		private boolean description;
+		private boolean dueComplete;
+		public Long getVotes() {
+			return votes;
+		}
+		public void setVotes(Long votes) {
+			this.votes = votes;
+		}
+		public Long getCheckItems() {
+			return checkItems;
+		}
+		public void setCheckItems(Long checkItems) {
+			this.checkItems = checkItems;
+		}
+		public Long getCheckItemsChecked() {
+			return checkItemsChecked;
+		}
+		public void setCheckItemsChecked(Long checkItemsChecked) {
+			this.checkItemsChecked = checkItemsChecked;
+		}
+		public Long getComments() {
+			return comments;
+		}
+		public void setComments(Long comments) {
+			this.comments = comments;
+		}
+		public Long getAttachments() {
+			return attachments;
+		}
+		public void setAttachments(Long attachments) {
+			this.attachments = attachments;
+		}
+		public Date getDue() {
+			return due;
+		}
+		public void setDue(Date due) {
+			this.due = due;
+		}
+		public String getFogbugz() {
+			return fogbugz;
+		}
+		public void setFogbugz(String fogbugz) {
+			this.fogbugz = fogbugz;
+		}
+		public boolean isViewingMemberVoted() {
+			return viewingMemberVoted;
+		}
+		public void setViewingMemberVoted(boolean viewingMemberVoted) {
+			this.viewingMemberVoted = viewingMemberVoted;
+		}
+		public boolean isSubscribed() {
+			return subscribed;
+		}
+		public void setSubscribed(boolean subscribed) {
+			this.subscribed = subscribed;
+		}
+		public boolean isDescription() {
+			return description;
+		}
+		public void setDescription(boolean description) {
+			this.description = description;
+		}
+		public boolean isDueComplete() {
+			return dueComplete;
+		}
+		public void setDueComplete(boolean dueComplete) {
+			this.dueComplete = dueComplete;
+		}
+		@Override
+		public String toString() {
+			return "Badges [votes=" + votes + ", checkItems=" + checkItems + ", checkItemsChecked=" + checkItemsChecked
+					+ ", comments=" + comments + ", attachments=" + attachments + ", due=" + due + ", fogbugz="
+					+ fogbugz + ", viewingMemberVoted=" + viewingMemberVoted + ", subscribed=" + subscribed
+					+ ", description=" + description + ", dueComplete=" + dueComplete + "]";
+		}
+	}
 
 	public class Attachment {
 
@@ -165,27 +255,51 @@ public class Card extends TrelloObject {
 		public void setIdMember(String idMember) {
 			this.idMember = idMember;
 		}
+
+		@Override
+		public String toString() {
+			return "Attachment [_id=" + _id + ", bytes=" + bytes + ", date=" + date + ", url=" + url + ", name=" + name
+					+ ", idMember=" + idMember + "]";
+		}
 	}
 
-	public class Label {
+	public Date getDue() {
+		return due;
+	}
 
-		private String color;
-		private String name;
+	public void setDue(Date due) {
+		this.due = due;
+	}
 
-		public String getColor() {
-			return color;
-		}
+	public boolean isDueComplete() {
+		return dueComplete;
+	}
 
-		public void setColor(String color) {
-			this.color = color;
-		}
+	public void setDueComplete(boolean dueComplete) {
+		this.dueComplete = dueComplete;
+	}
 
-		public String getName() {
-			return name;
-		}
+	public List<String> getIdChecklists() {
+		return idChecklists;
+	}
 
-		public void setName(String name) {
-			this.name = name;
-		}
+	public void setIdChecklists(List<String> idChecklists) {
+		this.idChecklists = idChecklists;
+	}
+
+	public Badges getBadges() {
+		return badges;
+	}
+
+	public void setBadges(Badges badges) {
+		this.badges = badges;
+	}
+
+	@Override
+	public String toString() {
+		return "Card [name=" + name + ", desc=" + desc + ", closed=" + closed + ", idShort=" + idShort + ", idList="
+				+ idList + ", idBoard=" + idBoard + ", idChecklists=" + idChecklists + ", idMembers=" + idMembers
+				+ ", attachments=" + attachments + ", labels=" + labels + ", url=" + url + ", pos=" + pos + ", due="
+				+ due + ", dueComplete=" + dueComplete + ", badges=" + badges + ", id=" + id + "]";
 	}
 }

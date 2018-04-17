@@ -1,21 +1,23 @@
 package org.trello4j;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import com.google.gson.reflect.TypeToken;
-import org.trello4j.gson.PermissionTypeDeserializer;
-import org.trello4j.gson.TrelloTypeDeserializer;
-import org.trello4j.model.Board.PERMISSION_TYPE;
-import org.trello4j.model.TrelloType;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.List;
+
+import org.trello4j.gson.PermissionTypeDeserializer;
+import org.trello4j.gson.TrelloTypeDeserializer;
+import org.trello4j.model.Board.PERMISSION_TYPE;
+import org.trello4j.model.TrelloType;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 
 /**
  * The Class TrelloObjectFactoryImpl.
@@ -45,7 +47,13 @@ public class TrelloObjectFactoryImpl {
 		if (jsonContent == null) {
 			return isList(typeToken) ? (T) Collections.emptyList() : null;
 		}
-		return unmarshallToObj(typeToken, unmarshallToJson(jsonContent));
+		JsonElement toJson = unmarshallToJson(jsonContent);
+		try {
+			return unmarshallToObj(typeToken, toJson);
+		} catch (JsonSyntaxException e) {
+			System.err.println("Error reading object: " + toJson.toString());
+			throw e;
+		}
 	}
 
 	/**

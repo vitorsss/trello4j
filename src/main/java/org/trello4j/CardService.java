@@ -48,7 +48,7 @@ public interface CardService {
 
 	void deleteCard(String cardId);
 	
-	Label addLabelToCard(String cardId, String idLabel);
+	List<String> addLabelToCard(String cardId, String idLabel);
 	
 	Action addCommentToCard(String cardId, String text);
 	

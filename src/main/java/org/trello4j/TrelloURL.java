@@ -156,9 +156,9 @@ public class TrelloURL {
 
 	private String createUrlWithPathParams() {
 		if (pathParams == null || pathParams.length == 0) return url;
-		String compiledUrl = null;
+		String compiledUrl = url;
 		for (int i = 0; i < pathParams.length; i++) {
-			compiledUrl = url.replaceAll(PATH_PARAM_ARG_PREFIX + i
+			compiledUrl = compiledUrl.replaceAll(PATH_PARAM_ARG_PREFIX + i
 					+ PATH_PARAM_ARG_SUFFIX, pathParams[i]);
 		}
 		// boardUrl += authQueryString;

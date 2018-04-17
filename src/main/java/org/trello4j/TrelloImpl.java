@@ -1,15 +1,16 @@
 package org.trello4j;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.Authenticator;
 import java.net.InetSocketAddress;
 import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -1265,11 +1266,11 @@ public class TrelloImpl implements Trello {
 	}
 
 	@Override
-	public Label addLabelToCard(String cardId, String idLabel) {
-		String url = TrelloURL.create(apiKey, TrelloURL.CARD_IDLABELS_URL, cardId).token(token).build();
+	public List<String> addLabelToCard(String cardId, String idLabel) {
+		String url = TrelloURL.create(apiKey, TrelloURL.CARD_IDLABELS_URL, cardId, "").token(token).build();
 		HashMap<String, String> keyValueMap = new HashMap<String, String>();
 		keyValueMap.put("value", idLabel);
-		return trelloObjFactory.createObject(new TypeToken<Label>() {}, doPost(url, keyValueMap));
+		return trelloObjFactory.createObject(new TypeToken<List<String>>() {}, doPost(url, keyValueMap));
 	}
 
 	@Override
@@ -1411,7 +1412,20 @@ public class TrelloImpl implements Trello {
             	}
             	return doRequest(url, requestMethod, map);
             } else if (conn.getResponseCode() > 399) {
-            	System.err.println("Response error: " + conn.getResponseCode());
+            	StringBuilder responseError = new StringBuilder();
+            	try {
+	            	if (conn.getErrorStream() != null) {
+	            		BufferedReader br = new BufferedReader(new InputStreamReader(getWrappedInputStream(conn.getErrorStream(), GZIP_ENCODING.equalsIgnoreCase(conn.getContentEncoding()))));
+	            		String data = null;
+	            		while ((data = br.readLine()) != null) {
+	            			responseError.append(data).append("\n");
+	            		}
+	            		br.close();
+	            	}
+            	} catch (Exception e) {
+            		
+            	}
+            	System.err.println("Response error: " + conn.getResponseCode() + " - " + url + " - " + requestMethod + " - " + map + " - "+ responseError.toString());
 				return null;
 			} else {
 				return getWrappedInputStream(
